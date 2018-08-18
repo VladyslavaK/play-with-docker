@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+  api:
+    build:     
+      context: ./SimpleAPI
+      dockerfile: Dockerfile
+    environment:
+     - ASPNETCORE_ENVIRONMENT=Development
+     - ASPNETCORE_URLS=http://0.0.0.0:54334
+     - CONN_STRING=Server=tcp:10.0.75.1,1433;Database=TEST;User=Docker;Password=123456;
+    #  - CONN_STRING=Server=db;Database=TEST;User=sa;Password=Alaska2017;
+    volumes: 
+     - ./SimpleAPI/.:/app
+    depends_on:
+      - db
+    ports:
+      - 54334:54334
+
+  frontend:
+    build:     
+      context: ./ui/SimpleUI
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+    volumes: 
+      - ./ui/SimpleUI/.:/simple/.
+      - ./ui/SimpleUI/node_modules:/simple/node_modules
+    ports:
+      - 4200:4200  
+      - 49155:49153
+
+  db:
+    build:
+      context: ./
+      dockerfile: Dockerfile-db
+    ports:
+      - "1435:1433"
+    environment:
+      SA_PASSWORD: "Alaska2017"
+    healthcheck:
+      test: sqlcmd -S localhost -U SA -P 'Alaska2017' -Q 'select 1 from Test.dbo.Tasks'
+      interval: 1m30s
+      timeout: 10s
+      retries: 3  
